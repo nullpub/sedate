@@ -1,4 +1,8 @@
-import { ServerRequest } from "https://deno.land/std@0.71.0/http/mod.ts";
+import {
+  ServerRequest,
+  Cookie,
+  Response,
+} from "https://deno.land/std@0.71.0/http/mod.ts";
 import * as TE from "https://deno.land/x/hkts@v0.0.15/task_either.ts";
 import * as T from "https://deno.land/x/hkts@v0.0.15/task.ts";
 import * as E from "https://deno.land/x/hkts@v0.0.15/either.ts";
@@ -113,16 +117,7 @@ export const Status = {
 
 export type Status = typeof Status[keyof typeof Status];
 
-export interface CookieOptions {
-  readonly expires?: Date;
-  readonly domain?: string;
-  readonly httpOnly?: boolean;
-  readonly maxAge?: number;
-  readonly path?: string;
-  readonly sameSite?: boolean | "strict" | "lax";
-  readonly secure?: boolean;
-  readonly signed?: boolean;
-}
+export type CookieOptions = Cookie;
 
 /***************************************************************************************************
  * @section Types
@@ -158,14 +153,11 @@ export interface Connection<S> {
   readonly getMethod: () => string;
   readonly setCookie: (
     this: Connection<HeadersOpen>,
-    name: string,
-    value: string,
-    options: CookieOptions,
+    cookie: Cookie,
   ) => Connection<HeadersOpen>;
   readonly clearCookie: (
     this: Connection<HeadersOpen>,
     name: string,
-    options: CookieOptions,
   ) => Connection<HeadersOpen>;
   readonly setHeader: (
     this: Connection<HeadersOpen>,
@@ -178,7 +170,7 @@ export interface Connection<S> {
   ) => Connection<HeadersOpen>;
   readonly setBody: (
     this: Connection<BodyOpen>,
-    body: unknown,
+    body: Response["body"],
   ) => Connection<ResponseEnded>;
   readonly endResponse: (
     this: Connection<BodyOpen>,
@@ -324,17 +316,14 @@ export const contentType = <E = never>(
   header("Content-Type", mediaType);
 
 export const cookie = <E = never>(
-  name: string,
-  value: string,
-  options: CookieOptions,
+  cookie: Cookie,
 ): Middleware<HeadersOpen, HeadersOpen, E, void> =>
-  modifyConnection((c) => c.setCookie(name, value, options));
+  modifyConnection((c) => c.setCookie(cookie));
 
 export const clearCookie = <E = never>(
   name: string,
-  options: CookieOptions,
 ): Middleware<HeadersOpen, HeadersOpen, E, void> =>
-  modifyConnection((c) => c.clearCookie(name, options));
+  modifyConnection((c) => c.clearCookie(name));
 
 export const closeHeaders = <E = never>(): Middleware<
   HeadersOpen,
